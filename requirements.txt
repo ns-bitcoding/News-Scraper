@@ -1,0 +1,7 @@
+bs4
+pandas
+requests
+tenacity
+botasaurus
+python-dotenv
+python-dateutil
