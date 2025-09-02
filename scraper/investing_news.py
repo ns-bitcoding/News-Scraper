@@ -42,7 +42,10 @@ class Scraper:
         img_tag = soup.find('img', class_="h-full w-full object-contain")
         image_of_news = img_tag['src'] if img_tag else ''
         copyright = data['props']['pageProps']['state']['newsStore']['_article']['media'][0]['copyright'] if data else ''
-        img_result.append([copyright, image_of_news])
+        img_result.append({
+            'image_text':copyright, 
+            'image':image_of_news
+        })
         dd['image'] = img_result
 
         dd['content'] = soup.find('div', id="article").text.strip() if soup.find('div', id="article") else ''
@@ -53,7 +56,10 @@ class Scraper:
         for textlink in text_links:
             text_name = textlink.text
             text_href = urljoin(base_url, textlink['href'])
-            text_link_results.append([text_name, text_href])
+            text_link_results.append({
+                'text_name': text_name,
+                'text_href': text_href
+            })
             dd['text_link'] = text_link_results
 
         date_and_time = soup.select_one('div[class^="flex flex-col gap-2 text-warren-gray"] div')
