@@ -9,8 +9,11 @@ logging.basicConfig(level=logging.INFO)
 def scrape():
     URL = "https://www.cnbc.com/world/?region=world"
     HEADERS = {
-        "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
-                      "(KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36",
+        'accept': '*/*',
+        'accept-language': 'en-GB,en-US;q=0.9,en;q=0.8,bho;q=0.7',
+        'content-type': 'application/json',
+        'origin': 'https://www.cnbc.com',
+        'user-agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36',
     }
 
     try:
