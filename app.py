@@ -1,5 +1,5 @@
-from pydantic import BaseModel
-from fastapi import FastAPI, HTTPException, Request
+from pydantic import BaseModel, HttpUrl
+from fastapi import FastAPI, HTTPException
 from scraper import cnbc_scraper, investing_scraper, forexfactory_scraper
 
 app = FastAPI()
@@ -8,10 +8,19 @@ class CalendarRequest(BaseModel):
     date: str  
 
 class RangeRequest(BaseModel):
-    start_date: str  # Format: YYYY-MM-DD
-    end_date: str    # Format: YYYY-MM-DD
+    start_date: str 
+    end_date: str   
 
-# Mapping: domain → scraper functions
+class DetailRequest(BaseModel):
+    url: HttpUrl  
+
+class SearchRequest(BaseModel):
+    keyword: str 
+
+class HistoryRequest(BaseModel):
+    event_id: str  
+
+
 SCRAPERS = {
     "cnbc": {
         "latest": cnbc_scraper.latest_news,
@@ -33,66 +42,42 @@ SCRAPERS = {
 
 @app.get("/v1/{domain}/latest-news")
 async def latest_news(domain: str):
-    """
-    Get latest news for a given domain
-    Example: GET /v1/investing/latest-news
-    """
     scraper_map = SCRAPERS.get(domain.lower())
     if not scraper_map or "latest" not in scraper_map:
         raise HTTPException(status_code=404, detail=f"No scraper found for domain '{domain}'")
-
     return scraper_map["latest"]()
 
 
 @app.post("/v1/{domain}/detail-page")
-async def detail_news(domain: str, request: Request):
-    """
-    Get full detail page of a news article for a given domain
-    Example: POST /v1/investing/detail-page
-    Payload: {"url": "https://www.investing.com/news/..."}
-    """
+async def detail_news(domain: str, req: DetailRequest):
     scraper_map = SCRAPERS.get(domain.lower())
     if not scraper_map or "detail" not in scraper_map:
         raise HTTPException(status_code=404, detail=f"No scraper found for domain '{domain}'")
 
-    data = await request.json()
-    url = data.get("url", "")
+    if not req.url:
+        raise HTTPException(status_code=400, detail="URL cannot be empty")
 
-    if not url:
-        raise HTTPException(status_code=400, detail="URL is required in payload")
-
-    return scraper_map["detail"](url)
+    return scraper_map["detail"](req.url)
 
 
 @app.post("/v1/{domain}/search-news")
-async def search_news(domain: str, request: Request):
-    """
-    Search news for a given domain using keyword
-    Example: POST /v1/investing/search-news
-    Payload: {"keyword": "gold market"}
-    """
+async def search_news(domain: str, req: SearchRequest):
     scraper_map = SCRAPERS.get(domain.lower())
     if not scraper_map or "search" not in scraper_map:
         raise HTTPException(status_code=404, detail=f"No scraper found for domain '{domain}'")
 
-    data = await request.json()
-    keyword = data.get("keyword", "").strip()
+    if not req.keyword.strip():
+        raise HTTPException(status_code=400, detail="Keyword cannot be empty")
 
-    if not keyword:
-        raise HTTPException(status_code=400, detail="Keyword is required in payload")
+    return scraper_map["search"](req.keyword)
 
-    return scraper_map["search"](keyword)
 
 @app.post("/v1/{domain}/calendar")
 async def calendar(domain: str, req: CalendarRequest):
-    """
-    Get economic calendar for a given domain
-    Example: POST /v1/forexfactory/calendar
-    Body: { "date": "2025-09-05" }
-    """
     scraper_map = SCRAPERS.get(domain.lower())
     if not scraper_map or "calendar" not in scraper_map:
         raise HTTPException(status_code=404, detail=f"No calendar scraper found for domain '{domain}'")
+
     try:
         scraper_class = scraper_map["calendar"]
         scraper = scraper_class(req.date)
@@ -106,14 +91,10 @@ async def calendar(domain: str, req: CalendarRequest):
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-    
+
+
 @app.post("/v1/{domain}/range")
 async def get_range(domain: str, req: RangeRequest):
-    """
-    Fetch ForexFactory economic calendar for a date range.
-    Example: POST /v1/forexfactory/range
-    Body: { "start_date": "2025-09-01", "end_date": "2025-09-05" }
-    """
     scraper_map = SCRAPERS.get(domain.lower())
     if not scraper_map or "date_range" not in scraper_map:
         raise HTTPException(status_code=404, detail=f"No range scraper found for domain '{domain}'")
@@ -138,36 +119,24 @@ async def get_range(domain: str, req: RangeRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-
 @app.post("/v1/{domain}/history")
-async def get_history(domain: str, request: Request):
-    """
-    Fetch history data for an event by event_id
-    Example: POST /v1/forexfactory/history
-    Payload: {"event_id": "120345"}
-    """
+async def get_history(domain: str, req: HistoryRequest):
     scraper_map = SCRAPERS.get(domain.lower())
     if not scraper_map or "history" not in scraper_map:
         raise HTTPException(status_code=404, detail=f"No history scraper found for domain '{domain}'")
-
-    data = await request.json()
-    event_id = data.get("event_id", "")
-    if not event_id:
-        raise HTTPException(status_code=400, detail="event_id is required")
 
     try:
         history_scraper_class = scraper_map["history"]
         history_scraper = history_scraper_class()
 
-        history_data = history_scraper.scrape(event_id)
+        history_data = history_scraper.scrape(req.event_id)
 
         if not history_data:
-            raise HTTPException(status_code=404, detail=f"No history data found for event_id {event_id}")
+            raise HTTPException(status_code=404, detail=f"No history data found for event_id {req.event_id}")
 
         return history_data
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-
 
 
 # """
