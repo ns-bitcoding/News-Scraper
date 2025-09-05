@@ -101,7 +101,7 @@ async def calendar(domain: str, req: CalendarRequest):
         cleaned_data = scraper.clean_data()
         return {
             "date": req.date,
-            "count": len(cleaned_data),
+            "total_result": len(cleaned_data),
             "data": cleaned_data
         }
     except Exception as e:
@@ -131,7 +131,7 @@ async def get_range(domain: str, req: RangeRequest):
         return {
             "start_date": req.start_date,
             "end_date": req.end_date,
-            "count": len(cleaned_data),
+            "total_result": len(cleaned_data),
             "data": cleaned_data
         }
     except Exception as e:
