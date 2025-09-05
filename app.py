@@ -6,9 +6,9 @@ app = FastAPI()
 # Mapping: domain → scraper functions
 SCRAPERS = {
     "cnbc": {
-        "latest": cnbc_scraper.scrape,
-        # "detail": cnbc_scraper.detail_page,
-        # "search": cnbc_scraper.scrape
+        "latest": cnbc_scraper.latest_news,
+        "detail": cnbc_scraper.detail_page,
+        "search": cnbc_scraper.scrape_keyword
     },
     "investing": {
         "latest": investing_scraper.latest_news,
