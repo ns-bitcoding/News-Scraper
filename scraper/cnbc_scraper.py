@@ -10,6 +10,12 @@ logging.basicConfig(level=logging.INFO)
 
 
 def latest_news():
+    """
+    Fetch latest news from cnbc.com
+    Returns:
+        list: Parsed latest news articles
+    """
+
     URL = "https://www.cnbc.com/world/?region=world"
     HEADERS = {
         'accept': '*/*',
