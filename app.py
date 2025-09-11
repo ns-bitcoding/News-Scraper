@@ -5,20 +5,20 @@ from scraper import cnbc_scraper, investing_scraper, forexfactory_scraper
 app = FastAPI()
 
 class CalendarRequest(BaseModel):
-    date: str  
+    date: str
 
 class RangeRequest(BaseModel):
-    start_date: str 
-    end_date: str   
+    start_date: str
+    end_date: str
 
 class DetailRequest(BaseModel):
-    url: HttpUrl  
+    url: HttpUrl
 
 class SearchRequest(BaseModel):
-    keyword: str 
+    keyword: str
 
 class HistoryRequest(BaseModel):
-    event_id: str  
+    event_id: str
 
 
 SCRAPERS = {
@@ -137,21 +137,3 @@ async def get_history(domain: str, req: HistoryRequest):
         return history_data
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-
-
-# """
-# Run the app with:
-#     uvicorn app:app --reload
-
-# In Postman:
-
-# 1. GET latest news:
-#    GET http://localhost:8000/v1/cnbc/latest-news
-
-# 2. Search news:
-#    POST http://localhost:8000/v1/cnbc/detail-page
-#    Body (JSON):
-#    {
-#      "keyword": "stock"
-#    }
-# """
