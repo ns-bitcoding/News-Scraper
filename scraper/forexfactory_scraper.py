@@ -111,20 +111,23 @@ class HistoryScraper:
         history = list()
         res = Request().get(url, headers=self.headers)
         base_url = 'https://www.forexfactory.com'
-        related_news = dict()
+        related_news = list()
 
-        try:
-            news_html = res.json()['data']['linked_threads']['news'][0]['html']
-            news = BeautifulSoup(news_html, 'html.parser')
-            related_news['news_url'] = urljoin(base_url, news.find('a')['href']) if news.find('a') else ''
-            related_news['news_title'] = news.find('a')['title'] if news.find('a') else ''
-            related_news['image'] = news.find('img')['src'] if news.find('img') else ''
-            related_news['source'] = news.find('a', attrs={'data-source': True}).text if news.find('a', attrs={'data-source': True}) else ''
-            related_news['content'] = news.select_one('p[class*="flexposts__preview flexposts__preview--pad"]').text if news.select_one('p[class*="flexposts__preview flexposts__preview--pad"]') else ''
-            related_news['date'] = news.select_one('span[class*="flexposts__nowrap flexposts__time"]').text if news.select_one('span[class*="flexposts__nowrap flexposts__time"]') else ''
-            related_news['comment'] = news.select_one('.comments').text.strip('|') if news.select_one('.comments') else ''
-        except (KeyError, IndexError, TypeError, AttributeError):
-            related_news = {'news_url': '', 'news_title': '', 'image': '', 'source': '', 'content': '', 'date': '', 'comment': ''}
+        news_html = res.json()['data']['linked_threads']['news']
+        for html in news_html:
+            news_dict = dict()
+            try:
+                news = BeautifulSoup(html['html'], 'html.parser')
+                news_dict['news_url'] = urljoin(base_url, news.find('a')['href']) if news.find('a') else ''
+                news_dict['news_title'] = news.find('a')['title'] if news.find('a') else ''
+                news_dict['image'] = news.find('img')['src'] if news.find('img') else ''
+                news_dict['source'] = news.find('a', attrs={'data-source': True}).text if news.find('a', attrs={'data-source': True}) else ''
+                news_dict['content'] = news.select_one('p[class*="flexposts__preview flexposts__preview--pad"]').text if news.select_one('p[class*="flexposts__preview flexposts__preview--pad"]') else ''
+                news_dict['date'] = news.select_one('span[class*="flexposts__nowrap flexposts__time"]').text if news.select_one('span[class*="flexposts__nowrap flexposts__time"]') else ''
+                news_dict['comment'] = news.select_one('.comments').text.strip('|') if news.select_one('.comments') else ''
+            except (KeyError, IndexError, TypeError, AttributeError):
+                news_dict = {'news_url': '', 'news_title': '', 'image': '', 'source': '', 'content': '', 'date': '', 'comment': ''}
+            related_news.append(news_dict)
 
         history_forex_data = res.json()['data']['history']['events']
         has_more_key = res.json()['data']['history']
